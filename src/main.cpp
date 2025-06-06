@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <graphviz/gvc.h>
 using namespace std;
 
 #define HELP_EXIT()                                                   \
@@ -28,7 +29,8 @@ int main(int argc, char *argv[])
     }
 
     std::random_device rd;
-    std::mt19937 gen(rd());                  // Генератор случайных чисел
+    std::mt19937 gen(rd()); // Генератор случайных чисел
+
     vector<Node> nodes = {{1, 2}, {0}, {0}}; // Граф
     for (size_t i = 0; i < iterations; i++)
     {
@@ -51,15 +53,34 @@ int main(int argc, char *argv[])
         }
         nodes.push_back(new_node); // Добавляем новую вершину в граф
     }
-    for (Node node : nodes)
+    GVC_t *gvc = gvContext(); // Инициализация Graphviz
+    char graph_name[] = "graph";
+    Agraph_t *g = agopen(graph_name, Agundirected, 0);
+    vector<Agnode_t *> g_nodes;
+    for (size_t i = 0; i < nodes.size(); i++)
     {
-        cout << "{";
+        Node node = nodes[i];
+        Agnode_t *n = agnode(g, (char *)to_string(i).c_str(), 1);
+        agsafeset(n, "shape", "circle", "");
+        agsafeset(n, "width", "0.3", "");
+        agsafeset(n, "fixedsize", "true", "");
+        g_nodes.push_back(n);
+    }
+    for (size_t i = 0; i < nodes.size(); i++)
+    {
+        Node node = nodes[i];
         for (size_t neighbor : node)
         {
-            cout << neighbor << ",";
+            if (neighbor < i) // Избегаем дублирования ребер
+                continue;
+            agedge(g, g_nodes[i], g_nodes[neighbor], 0, 1);
         }
-        cout << "} ";
     }
-    cout << endl;
+
+    gvLayout(gvc, g, "circo");
+    gvRenderFilename(gvc, g, "png", "output.png");
+    gvFreeLayout(gvc, g);
+    agclose(g);
+    gvFreeContext(gvc);
     return 0;
 }
