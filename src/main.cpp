@@ -2,16 +2,18 @@
 #include <vector>
 #include <random>
 #include <fstream>
+#include <string>
 using namespace std;
 
 #define HELP_EXIT()                                                   \
-    cerr << "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ:\n\""                                      \
-         << argv[0] << "\" РёС‚РµСЂР°С†РёР№ РЅРѕРІС‹С…_СЂРµР±РµСЂ_Р·Р°_РёС‚РµСЂР°С†РёСЋ" << endl; \
+    cerr << "Использование:\n\""                                      \
+         << argv[0] << "\" итераций новых_ребер_за_итерацию" << endl; \
     return 1;
-typedef vector<size_t> Node; // Р’РµСЂС€РёРЅР° РіСЂР°С„Р° (СЃРїРёСЃРѕРє СЃРјРµР¶РЅС‹С… РµР№ РІРµСЂС€РёРЅ)
+typedef vector<size_t> Node; // Вершина графа (список смежных ей вершин)
 
 int main(int argc, char *argv[])
 {
+    setlocale(LC_ALL, "Russian");
     if (argc != 3)
     {
         HELP_EXIT();
@@ -20,8 +22,8 @@ int main(int argc, char *argv[])
     size_t edges_per_iter;
     try
     {
-        iterations = std::stoi(argv[1]);     // РљРѕР»РёС‡РµСЃС‚РІРѕ РёС‚РµСЂР°С†РёР№
-        edges_per_iter = std::stoi(argv[2]); // РљРѕР»РёС‡РµСЃС‚РІРѕ РЅРѕРІС‹С… СЂРµР±РµСЂ Р·Р° РёС‚РµСЂР°С†РёСЋ (С€Р°Рі Рђ)
+        iterations = stoi(argv[1]);     // Количество итераций
+        edges_per_iter = stoi(argv[2]); // Количество новых ребер за итерацию (шаг А)
     }
     catch (...)
     {
@@ -29,29 +31,29 @@ int main(int argc, char *argv[])
     }
 
     std::random_device rd;
-    std::mt19937 gen(rd()); // Р“РµРЅРµСЂР°С‚РѕСЂ СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
+    std::mt19937 gen(rd()); // Генератор случайных чисел
 
-    vector<Node> nodes = {{1, 2}, {0}, {0}}; // Р“СЂР°С„
+    vector<Node> nodes = {{1, 2}, {0}, {0}}; // Граф
     for (size_t i = 0; i < iterations; i++)
     {
-        vector<size_t> weights; // Р’РµСЃР° РІРµСЂС€РёРЅ
+        vector<size_t> weights; // Веса вершин
         weights.reserve(nodes.size());
         for (size_t i = 0; i < nodes.size(); i++)
         {
             Node node = nodes[i];
-            weights.push_back(node.size()); // Р’РµСЃ РІРµСЂС€РёРЅС‹ СЌС‚Рѕ РµС‘ СЃС‚РµРїРµРЅСЊ
+            weights.push_back(node.size()); // Вес вершины это её степень
         }
 
         Node new_node;
-        for (size_t j = 0; j < edges_per_iter; j++) // РЁР°Рі Рђ
+        for (size_t j = 0; j < edges_per_iter; j++) // Шаг А
         {
             discrete_distribution<size_t> distribution(weights.begin(), weights.end());
-            size_t selected_node = distribution(gen); // Р’С‹Р±РёСЂР°РµРј РІРµСЂС€РёРЅСѓ РґР»СЏ РЅРѕРІРѕРіРѕ СЂРµР±СЂР°
+            size_t selected_node = distribution(gen); // Выбираем вершину для нового ребра
             new_node.push_back(selected_node);
-            nodes[selected_node].push_back(nodes.size()); // Р РµР±СЂРѕ РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РІ РѕР±Рµ РІРµСЂС€РёРЅС‹
-            weights[selected_node] = 0;                   // РћР±РЅСѓР»СЏРµРј РІРµСЃ РІС‹Р±СЂР°РЅРЅРѕР№ РІРµСЂС€РёРЅС‹, С‡С‚РѕР±С‹ РЅРµ РІС‹Р±СЂР°С‚СЊ РµРµ СЃРЅРѕРІР° РІ СЌС‚РѕР№ РёС‚РµСЂР°С†РёРё
+            nodes[selected_node].push_back(nodes.size()); // Ребро нужно добавить в обе вершины
+            weights[selected_node] = 0;                   // Обнуляем вес выбранной вершины, чтобы не выбрать ее снова в этой итерации
         }
-        nodes.push_back(new_node); // Р”РѕР±Р°РІР»СЏРµРј РЅРѕРІСѓСЋ РІРµСЂС€РёРЅСѓ РІ РіСЂР°С„
+        nodes.push_back(new_node); // Добавляем новую вершину в граф
     }
     for (auto node : nodes)
     {
