@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
-#include <graphviz/gvc.h>
+#include <fstream>
 using namespace std;
 
 #define HELP_EXIT()                                                   \
@@ -35,11 +35,11 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < iterations; i++)
     {
         vector<size_t> weights; // Веса вершин
+        weights.reserve(nodes.size());
         for (size_t i = 0; i < nodes.size(); i++)
         {
             Node node = nodes[i];
-            size_t edge_count = node.size(); // Степень/вес вершины
-            weights.push_back(edge_count);
+            weights.push_back(node.size()); // Вес вершины это её степень
         }
 
         Node new_node;
@@ -53,34 +53,28 @@ int main(int argc, char *argv[])
         }
         nodes.push_back(new_node); // Добавляем новую вершину в граф
     }
-    GVC_t *gvc = gvContext(); // Инициализация Graphviz
-    char graph_name[] = "graph";
-    Agraph_t *g = agopen(graph_name, Agundirected, 0);
-    vector<Agnode_t *> g_nodes;
-    for (size_t i = 0; i < nodes.size(); i++)
+    for (auto node : nodes)
     {
-        Node node = nodes[i];
-        Agnode_t *n = agnode(g, (char *)to_string(i).c_str(), 1);
-        agsafeset(n, "shape", "circle", "");
-        agsafeset(n, "width", "0.3", "");
-        agsafeset(n, "fixedsize", "true", "");
-        g_nodes.push_back(n);
-    }
-    for (size_t i = 0; i < nodes.size(); i++)
-    {
-        Node node = nodes[i];
+        cout << "{";
         for (size_t neighbor : node)
         {
-            if (neighbor < i) // Избегаем дублирования ребер
-                continue;
-            agedge(g, g_nodes[i], g_nodes[neighbor], 0, 1);
+            cout << neighbor << ",";
         }
+        cout << "} ";
     }
 
-    gvLayout(gvc, g, "circo");
-    gvRenderFilename(gvc, g, "png", "output.png");
-    gvFreeLayout(gvc, g);
-    agclose(g);
-    gvFreeContext(gvc);
+    ofstream out;
+    out.open("graph.dot");
+    out << "graph G {\n  overlap=false;\n  node [shape=circle];\n";
+    for (size_t i = 0; i < nodes.size(); ++i)
+    {
+        for (size_t neighbor : nodes[i])
+        {
+            if (i <= neighbor)
+                out << "  " << i << " -- " << neighbor << ";\n";
+        }
+    }
+    out << "}\n";
+    out.close();
     return 0;
 }
