@@ -18,7 +18,7 @@ void saveGraph(std::vector<Node> &nodes, std::string filename = "graphs/graph.do
 {
     ofstream out;
     out.open(filename);
-    out << "graph G {\n  overlap=false node [shape=circle];\n";
+    out << "graph G {\n  splines=true;\n  overlap=false;  node [shape=circle];\n";
     for (auto i = 0; i < nodes.size(); ++i)
     {
         for (auto neighbor : nodes[i])
@@ -53,8 +53,7 @@ int main(int argc, char *argv[])
     }
     std::bernoulli_distribution choose_neighbor(choose_neighbor_chance);
     cout << "t: " << iterations << "\tm: " << edges_per_iter << "\tp: " << choose_neighbor_chance << endl;
-    std::random_device rd;
-    std::mt19937 gen(rd());                  // Генератор случайных чисел
+    std::mt19937 gen(0);                     // Генератор случайных чисел
     vector<Node> nodes = {{1, 2}, {0}, {0}}; // Граф
     for (size_t i = 0; i < iterations; i++)
     {
