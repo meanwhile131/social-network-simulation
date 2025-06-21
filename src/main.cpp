@@ -9,10 +9,10 @@
 using namespace std;
 
 #define HELP_EXIT()                                                                                \
-    cerr << "Использование:\n\""                                                                   \
-         << argv[0] << "\" t(итераций) m(новых ребер за итерацию) p(шанс выбрать соседа)" << endl; \
+    cerr << "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ:\n\""                                                                   \
+         << argv[0] << "\" t(РёС‚РµСЂР°С†РёР№) m(РЅРѕРІС‹С… СЂРµР±РµСЂ Р·Р° РёС‚РµСЂР°С†РёСЋ) p(С€Р°РЅСЃ РІС‹Р±СЂР°С‚СЊ СЃРѕСЃРµРґР°)" << endl; \
     return 1;
-typedef vector<size_t> Node; // Вершина графа (список смежных ей вершин)
+typedef vector<size_t> Node; // Р’РµСЂС€РёРЅР° РіСЂР°С„Р° (СЃРїРёСЃРѕРє СЃРјРµР¶РЅС‹С… РµР№ РІРµСЂС€РёРЅ)
 
 void saveGraph(std::vector<Node> &nodes, std::string filename = "graphs/graph.dot")
 {
@@ -33,7 +33,7 @@ void saveGraph(std::vector<Node> &nodes, std::string filename = "graphs/graph.do
 
 int main(int argc, char *argv[])
 {
-    setlocale(LC_ALL, "Russian"); // Исправляет проблемы с выводом киррилицы
+    setlocale(LC_ALL, "Russian"); // РСЃРїСЂР°РІР»СЏРµС‚ РїСЂРѕР±Р»РµРјС‹ СЃ РІС‹РІРѕРґРѕРј РєРёСЂСЂРёР»РёС†С‹
     if (argc != 4)
     {
         HELP_EXIT();
@@ -43,9 +43,9 @@ int main(int argc, char *argv[])
     float choose_neighbor_chance;
     try
     {
-        iterations = stoul(argv[1]);            // Количество итераций
-        edges_per_iter = stoul(argv[2]);        // Количество новых ребер за итерацию (шаг А)
-        choose_neighbor_chance = stof(argv[3]); // Шанс выбрать соседа (шаг Б)
+        iterations = stoul(argv[1]);            // РљРѕР»РёС‡РµСЃС‚РІРѕ РёС‚РµСЂР°С†РёР№
+        edges_per_iter = stoul(argv[2]);        // РљРѕР»РёС‡РµСЃС‚РІРѕ РЅРѕРІС‹С… СЂРµР±РµСЂ Р·Р° РёС‚РµСЂР°С†РёСЋ (С€Р°Рі Рђ)
+        choose_neighbor_chance = stof(argv[3]); // РЁР°РЅСЃ РІС‹Р±СЂР°С‚СЊ СЃРѕСЃРµРґР° (С€Р°Рі Р‘)
     }
     catch (...)
     {
@@ -53,27 +53,27 @@ int main(int argc, char *argv[])
     }
     std::bernoulli_distribution choose_neighbor(choose_neighbor_chance);
     cout << "t: " << iterations << "\tm: " << edges_per_iter << "\tp: " << choose_neighbor_chance << endl;
-    std::mt19937 gen(0);                     // Генератор случайных чисел
-    vector<Node> nodes = {{1, 2}, {0}, {0}}; // Граф (вершина это вектор её соседей)
+    std::mt19937 gen(0);                     // Р“РµРЅРµСЂР°С‚РѕСЂ СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
+    vector<Node> nodes = {{1, 2}, {0}, {0}}; // Р“СЂР°С„ (РІРµСЂС€РёРЅР° СЌС‚Рѕ РІРµРєС‚РѕСЂ РµС‘ СЃРѕСЃРµРґРµР№)
     vector<size_t> weights;
     for (size_t i = 0; i < iterations; i++)
     {
         weights.clear();
         weights.reserve(nodes.size());
-        std::transform(nodes.begin(), nodes.end(), std::back_inserter(weights), [](const auto& node){ return node.size(); }); // Записывает веса (степени) вершин в weights
+        std::transform(nodes.begin(), nodes.end(), std::back_inserter(weights), [](const auto& node){ return node.size(); }); // Р—Р°РїРёСЃС‹РІР°РµС‚ РІРµСЃР° (СЃС‚РµРїРµРЅРё) РІРµСЂС€РёРЅ РІ weights
 
         Node new_node;
 
-        // Шаг А
+        // РЁР°Рі Рђ
         discrete_distribution<size_t> weighted_distribution(weights.begin(), weights.end());
-        size_t selected_node = weighted_distribution(gen); // Выбираем вершину для нового ребра
+        size_t selected_node = weighted_distribution(gen); // Р’С‹Р±РёСЂР°РµРј РІРµСЂС€РёРЅСѓ РґР»СЏ РЅРѕРІРѕРіРѕ СЂРµР±СЂР°
         new_node.push_back(selected_node);
-        nodes[selected_node].push_back(nodes.size()); // Ребро нужно добавить в обе вершины
-        weights[selected_node] = 0;                   // Обнуляем вес выбранной вершины, чтобы не выбрать ее снова в этой итерации
+        nodes[selected_node].push_back(nodes.size()); // Р РµР±СЂРѕ РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РІ РѕР±Рµ РІРµСЂС€РёРЅС‹
+        weights[selected_node] = 0;                   // РћР±РЅСѓР»СЏРµРј РІРµСЃ РІС‹Р±СЂР°РЅРЅРѕР№ РІРµСЂС€РёРЅС‹, С‡С‚РѕР±С‹ РЅРµ РІС‹Р±СЂР°С‚СЊ РµРµ СЃРЅРѕРІР° РІ СЌС‚РѕР№ РёС‚РµСЂР°С†РёРё
         saveGraph(nodes, std::format("graphs/{}_a.dot", i));
 
-        // Шаг Б
-        vector<pair<size_t, size_t>> weighted_neighbors; // Вес соседа и его индекс в паре
+        // РЁР°Рі Р‘
+        vector<pair<size_t, size_t>> weighted_neighbors; // Р’РµСЃ СЃРѕСЃРµРґР° Рё РµРіРѕ РёРЅРґРµРєСЃ РІ РїР°СЂРµ
         weighted_neighbors.reserve(nodes[selected_node].size() - 1);
         for (size_t i = 0; i < nodes[selected_node].size() - 1; ++i)
         {
@@ -81,18 +81,18 @@ int main(int argc, char *argv[])
             weighted_neighbors.emplace_back(weights[neighbor], neighbor);
         }
         sort(weighted_neighbors.begin(), weighted_neighbors.end(), [](const auto &a, const auto &b)
-             { return a.first > b.first; }); // Сортируем соседей по весу
+             { return a.first > b.first; }); // РЎРѕСЂС‚РёСЂСѓРµРј СЃРѕСЃРµРґРµР№ РїРѕ РІРµСЃСѓ
         for (size_t j = 0; j < edges_per_iter - 1; j++)
         {
-            if (choose_neighbor(gen)) // Б1: Если случайное число < p, то выбираем соседа с наибольшей степенью
+            if (choose_neighbor(gen)) // Р‘1: Р•СЃР»Рё СЃР»СѓС‡Р°Р№РЅРѕРµ С‡РёСЃР»Рѕ < p, С‚Рѕ РІС‹Р±РёСЂР°РµРј СЃРѕСЃРµРґР° СЃ РЅР°РёР±РѕР»СЊС€РµР№ СЃС‚РµРїРµРЅСЊСЋ
             {
                 size_t top_neighbor = weighted_neighbors[0].second;
                 new_node.push_back(top_neighbor);
-                nodes[top_neighbor].push_back(nodes.size());          // Добавляем новое ребро в обе вершины
-                weights[top_neighbor] = 0;                            // Обнуляем вес соседа, чтобы не выбрать его снова в Б2
-                weighted_neighbors.erase(weighted_neighbors.begin()); // Удаляем соседа из списка, чтобы не выбрать его снова в Б1
+                nodes[top_neighbor].push_back(nodes.size());          // Р”РѕР±Р°РІР»СЏРµРј РЅРѕРІРѕРµ СЂРµР±СЂРѕ РІ РѕР±Рµ РІРµСЂС€РёРЅС‹
+                weights[top_neighbor] = 0;                            // РћР±РЅСѓР»СЏРµРј РІРµСЃ СЃРѕСЃРµРґР°, С‡С‚РѕР±С‹ РЅРµ РІС‹Р±СЂР°С‚СЊ РµРіРѕ СЃРЅРѕРІР° РІ Р‘2
+                weighted_neighbors.erase(weighted_neighbors.begin()); // РЈРґР°Р»СЏРµРј СЃРѕСЃРµРґР° РёР· СЃРїРёСЃРєР°, С‡С‚РѕР±С‹ РЅРµ РІС‹Р±СЂР°С‚СЊ РµРіРѕ СЃРЅРѕРІР° РІ Р‘1
             }
-            else // Б2: Если случайное число > p, то выбираем случайную вершину (в соответствии с весами)
+            else // Р‘2: Р•СЃР»Рё СЃР»СѓС‡Р°Р№РЅРѕРµ С‡РёСЃР»Рѕ > p, С‚Рѕ РІС‹Р±РёСЂР°РµРј СЃР»СѓС‡Р°Р№РЅСѓСЋ РІРµСЂС€РёРЅСѓ (РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РІРµСЃР°РјРё)
             {
                 discrete_distribution<size_t> distribution(weights.begin(), weights.end());
                 size_t selected_node = distribution(gen);
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
             }
             saveGraph(nodes, std::format("graphs/{}_b_{}.dot", i, j));
         }
-        nodes.push_back(new_node); // Добавляем новую вершину в граф
+        nodes.push_back(new_node); // Р”РѕР±Р°РІР»СЏРµРј РЅРѕРІСѓСЋ РІРµСЂС€РёРЅСѓ РІ РіСЂР°С„
     }
 
     saveGraph(nodes);
