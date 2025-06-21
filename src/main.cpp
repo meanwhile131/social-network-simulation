@@ -17,19 +17,19 @@ typedef vector<size_t> Node; // Вершина графа (список смеж
 
 void saveGraph(std::vector<Node> &nodes, std::string filename = "out/graph.dot")
 {
-    ofstream out;
-    out.open(filename);
-    out << "graph G {\n  splines=true;\n  overlap=false;  node [shape=circle];\n";
+    ofstream graphFile;
+    graphFile.open(filename);
+    graphFile << "graph G {\n  splines=true;\n  overlap=false;  node [shape=circle];\n";
     for (auto i = 0; i < nodes.size(); ++i)
     {
         for (auto neighbor : nodes[i])
         {
             if (i <= neighbor)
-                out << "  " << i << " -- " << neighbor << ";\n";
+                graphFile << "  " << i << " -- " << neighbor << ";\n";
         }
     }
-    out << "}\n";
-    out.close();
+    graphFile << "}\n";
+    graphFile.close();
 }
 
 int main(int argc, char *argv[])
@@ -52,11 +52,16 @@ int main(int argc, char *argv[])
     {
         HELP_EXIT();
     }
-    std::filesystem::create_directory("out/");
-    std::bernoulli_distribution choose_neighbor(choose_neighbor_chance);
+    filesystem::create_directory("out/");
+    bernoulli_distribution choose_neighbor(choose_neighbor_chance);
     cout << "t: " << iterations << "\tm: " << edges_per_iter << "\tp: " << choose_neighbor_chance << endl;
-    std::mt19937 gen(0);                     // Генератор случайных чисел
+    mt19937 gen(0);                          // Генератор случайных чисел
     vector<Node> nodes = {{1, 2}, {0}, {0}}; // Граф
+
+    ofstream statsFile;
+    statsFile.open("out/stats.csv");
+    statsFile << "Итерация,Треугольники,2-х реберные пути\n";
+
     for (size_t i = 0; i < iterations; i++)
     {
         vector<size_t> weights;
@@ -105,32 +110,37 @@ int main(int argc, char *argv[])
                 weights[selected_node] = 0;
             }
         }
-        saveGraph(nodes, std::format("out/{}.dot", i));
         nodes.push_back(new_node); // Добавляем новую вершину в граф
 
         // Считаем количество треугольников и путей из 2-х ребер у вершины 0
         size_t triangle_count = 0;
         size_t path2_count = 0;
-        for (auto node1_i : nodes[0])
+        // Сортируем списки смежности для более эффективного поиска пересечений
+        for (auto &node : nodes)
         {
-            for (auto node2_i : nodes[node1_i])
+            std::sort(node.begin(), node.end());
+        }
+        for (size_t i = 0; i < nodes[0].size(); ++i)
+        {
+            size_t node1_i = nodes[0][i];
+            for (size_t j = i + 1; j < nodes[0].size(); ++j)
             {
-                if (node2_i == 0) // Попали обратно в вершину 0
-                {
-                    continue;
-                }
-                auto node2 = nodes[node2_i];
-                path2_count++;
-                if (std::find(node2.begin(), node2.end(), 0) != node2.end()) // У вершины 0 есть связь с этой -> треугольник
+                size_t node2_i = nodes[0][j];
+                path2_count += 2; // Учитываем пути в обе стороны
+                // Проверяем, есть ли ребро между node1_i и node2_i с помощью бинарного поиска
+                if (std::binary_search(nodes[node1_i].begin(), nodes[node1_i].end(), node2_i))
                 {
                     triangle_count++;
                 }
             }
         }
-        triangle_count /= 2; // Каждый треугольник посчитан в 2 стороны
-        cout << i << ": " << triangle_count << " треугольников\t" << path2_count << " путей\n";
+        if (i % 1000 == 1)
+        {
+            saveGraph(nodes, std::format("out/{}.dot", i));
+            statsFile << i << "," << triangle_count << "," << path2_count << "\n";
+        }
     }
-
     saveGraph(nodes);
+    statsFile.close();
     return 0;
 }
