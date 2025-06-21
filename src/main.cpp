@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <format>
+#include <filesystem>
 
 using namespace std;
 
@@ -14,7 +15,7 @@ using namespace std;
     return 1;
 typedef vector<size_t> Node; // Вершина графа (список смежных ей вершин)
 
-void saveGraph(std::vector<Node> &nodes, std::string filename = "graphs/graph.dot")
+void saveGraph(std::vector<Node> &nodes, std::string filename = "out/graph.dot")
 {
     ofstream out;
     out.open(filename);
@@ -51,6 +52,7 @@ int main(int argc, char *argv[])
     {
         HELP_EXIT();
     }
+    std::filesystem::create_directory("out/");
     std::bernoulli_distribution choose_neighbor(choose_neighbor_chance);
     cout << "t: " << iterations << "\tm: " << edges_per_iter << "\tp: " << choose_neighbor_chance << endl;
     std::mt19937 gen(0);                     // Генератор случайных чисел
@@ -70,11 +72,9 @@ int main(int argc, char *argv[])
         // Шаг А
         discrete_distribution<size_t> weighted_distribution(weights.begin(), weights.end());
         size_t selected_node = weighted_distribution(gen); // Выбираем вершину для нового ребра
-        cout << selected_node << endl;
         new_node.push_back(selected_node);
         nodes[selected_node].push_back(nodes.size()); // Ребро нужно добавить в обе вершины
         weights[selected_node] = 0;                   // Обнуляем вес выбранной вершины, чтобы не выбрать ее снова в этой итерации
-        saveGraph(nodes, std::format("graphs/{}_a.dot", i));
 
         // Шаг Б
         vector<pair<size_t, size_t>> weighted_neighbors; // Вес соседа и его индекс в паре
@@ -104,9 +104,31 @@ int main(int argc, char *argv[])
                 new_node.push_back(selected_node);
                 weights[selected_node] = 0;
             }
-            saveGraph(nodes, std::format("graphs/{}_b_{}.dot", i, j));
         }
+        saveGraph(nodes, std::format("out/{}.dot", i));
         nodes.push_back(new_node); // Добавляем новую вершину в граф
+
+        // Считаем количество треугольников и путей из 2-х ребер у вершины 0
+        size_t triangle_count = 0;
+        size_t path2_count = 0;
+        for (auto node1_i : nodes[0])
+        {
+            for (auto node2_i : nodes[node1_i])
+            {
+                if (node2_i == 0) // Попали обратно в вершину 0
+                {
+                    continue;
+                }
+                auto node2 = nodes[node2_i];
+                path2_count++;
+                if (std::find(node2.begin(), node2.end(), 0) != node2.end()) // У вершины 0 есть связь с этой -> треугольник
+                {
+                    triangle_count++;
+                }
+            }
+        }
+        triangle_count /= 2; // Каждый треугольник посчитан в 2 стороны
+        cout << i << ": " << triangle_count << " треугольников\t" << path2_count << " путей\n";
     }
 
     saveGraph(nodes);
