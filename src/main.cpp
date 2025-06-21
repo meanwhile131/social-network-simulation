@@ -16,7 +16,7 @@ using namespace std;
     return 1;
 typedef vector<size_t> Node; // Вершина графа (список смежных ей вершин)
 
-void saveGraph(vector<Node> &nodes, string filename = "out/graph.dot")
+void saveGraph(vector<Node>& nodes, string filename = "out/graph.dot")
 {
     ofstream graphFile;
     graphFile.open(filename);
@@ -33,7 +33,7 @@ void saveGraph(vector<Node> &nodes, string filename = "out/graph.dot")
     graphFile.close();
 }
 
-void runSimulation(string& stats, unsigned int run, size_t iterations, size_t edges_per_iter, float choose_neighbor_chance) {
+void runSimulation(string* stats, unsigned int run, size_t iterations, size_t edges_per_iter, float choose_neighbor_chance) {
     mt19937 gen;                     // Генератор случайных чисел
     gen.seed(run); // Каждый забег будет с другой случайностью
     bernoulli_distribution choose_neighbor(choose_neighbor_chance);
@@ -104,14 +104,15 @@ void runSimulation(string& stats, unsigned int run, size_t iterations, size_t ed
                 }
             }
             cout << run << "\t" << i << "\n";
-            stats.append(format("{},{},{},{}\n", run, i, triangle_count, path2_count));
+            stats->append(format("{},{},{},{}\n", run, i, triangle_count, path2_count));
         }
 
     }
     saveGraph(nodes, format("out/{}.dot", run));
+    cout << "Забег #" << run << " закончился.\n";
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian"); // Исправляет проблемы с выводом киррилицы
     if (argc != 5)
@@ -131,7 +132,7 @@ int main(int argc, char *argv[])
     }
     catch (...)
     {
-        HELP_EXIT(); 
+        HELP_EXIT();
     }
     filesystem::create_directory("out/");
     ofstream statsFile;
@@ -139,11 +140,9 @@ int main(int argc, char *argv[])
     statsFile << "Забег,Итерация,Треугольники,2-х реберные пути\n"; // CSV - первая строчка для заголовков
     cout << "c: " << run_count << "\tt: " << iterations << "\tm: " << edges_per_iter << "\tp: " << choose_neighbor_chance << endl;
     vector<thread> threads;
-    vector<string> statStrings; // Каждая runSimulation делает свою строку, чтобы не записывать в файл одновременно
-    statStrings.resize(run_count);
+    vector<string> statStrings(run_count); // Заранее выделяем место для строк
     for (unsigned int run = 0; run < run_count; run++)
     {
-        statStrings.emplace_back(string());
         threads.emplace_back(runSimulation, &statStrings[run], run, iterations, edges_per_iter, choose_neighbor_chance);
     }
     for (size_t i = 0; i < threads.size(); i++) {
