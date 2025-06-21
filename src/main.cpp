@@ -35,7 +35,7 @@ void saveGraph(std::vector<Node> &nodes, std::string filename = "out/graph.dot")
 int main(int argc, char *argv[])
 {
     setlocale(LC_ALL, "Russian"); // Исправляет проблемы с выводом киррилицы
-    if (argc != 4)
+    if (argc != 5)
     {
         HELP_EXIT();
     }
@@ -57,14 +57,14 @@ int main(int argc, char *argv[])
     filesystem::create_directory("out/");
     ofstream statsFile;
     statsFile.open("out/stats.csv");
-    statsFile << "Итерация,Треугольники,2-х реберные пути\n"; // CSV - первая строчка для заголовков
+    statsFile << "Забег,Итерация,Треугольники,2-х реберные пути\n"; // CSV - первая строчка для заголовков
     bernoulli_distribution choose_neighbor(choose_neighbor_chance);
-    cout << "c:" << run_count << "\tt: " << iterations << "\tm: " << edges_per_iter << "\tp: " << choose_neighbor_chance << endl;
-    std::mt19937 gen(0);                     // Генератор случайных чисел
+    cout << "c: " << run_count << "\tt: " << iterations << "\tm: " << edges_per_iter << "\tp: " << choose_neighbor_chance << endl;
+    std::mt19937 gen;                     // Генератор случайных чисел
     for (size_t run = 0; run < run_count; run++)
     {
         gen.seed(run); // Каждый забег будет с другой случайностью
-        vector<Node> nodes = { {1, 2}, {0}, {0} }; // Граф (вершина это вектор её соседей)
+        vector<Node> nodes = { {1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2} }; // Граф (вершина это вектор её соседей)
         vector<size_t> weights;
 
         for (size_t i = 0; i < iterations; i++)
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
             weights.clear();
             weights.reserve(nodes.size());
             std::transform(nodes.begin(), nodes.end(), std::back_inserter(weights), [](const auto& node) { return node.size(); }); // Записывает веса (степени) вершин в weights
-
+            
             Node new_node;
 
             // Шаг А
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
             new_node.push_back(selected_node);
             nodes[selected_node].push_back(nodes.size()); // Ребро нужно добавить в обе вершины
             weights[selected_node] = 0;                   // Обнуляем вес выбранной вершины, чтобы не выбрать ее снова в этой итерации
-
+            
             // Шаг Б
             vector<pair<size_t, size_t>> weighted_neighbors; // Вес соседа и его индекс в паре
             weighted_neighbors.reserve(nodes[selected_node].size() - 1);
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
             sort(weighted_neighbors.begin(), weighted_neighbors.end(), [](const auto& a, const auto& b)
                 { return a.first > b.first; }); // Сортируем соседей по весу
             for (size_t j = 0; j < edges_per_iter - 1; j++)
-            {
+            {            
                 if (choose_neighbor(gen)) // Б1: Если случайное число < p, то выбираем соседа с наибольшей степенью
                 {
                     size_t top_neighbor = weighted_neighbors[0].second;
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
                 }
             }
             nodes.push_back(new_node); // Добавляем новую вершину в граф
-
+            
             if (i % 1000 == 1)
             {
                 // Считаем количество треугольников и путей из 2-х ребер у вершины 0
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
                     {
                         if (node2_i == 0) // Попали обратно в вершину 0
                             continue;
-                        Node node2 = nodes[node2_i];
+                        Node& node2 = nodes[node2_i];
                         path2_count++;
                         if (std::find(node2.begin(), node2.end(), 0) != node2.end()) // У вершины 0 есть связь с этой -> треугольник
                             triangle_count++;
@@ -133,6 +133,7 @@ int main(int argc, char *argv[])
                 cout << run << "\t" << i << "\n";
                 statsFile << run << "," << i << "," << triangle_count << "," << path2_count << "\n";
             }
+            
         }
         saveGraph(nodes, std::format("out/{}.dot", run));
     }
