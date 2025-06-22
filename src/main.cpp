@@ -20,7 +20,7 @@ void saveGraph(vector<Node>& nodes, string filename = "out/graph.dot")
 {
     ofstream graphFile;
     graphFile.open(filename);
-    graphFile << "graph G {\n  splines=true;\n  overlap=false;  node [shape=circle];\n";
+    graphFile << "graph G {\n  splines=true;\n  overlap=scale;\n  node [shape=circle];\n";
     for (auto i = 0; i < nodes.size(); ++i)
     {
         for (auto neighbor : nodes[i])
