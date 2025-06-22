@@ -1,0 +1,3 @@
+[submodule "lib/matplotplusplus"]
+	path = lib/matplotplusplus
+	url = https://github.com/alandefreitas/matplotplusplus.git

@@ -7,6 +7,9 @@
 #include <format>
 #include <filesystem>
 #include <thread>
+#include <matplot/matplot.h>
+#include <matplot/backend/opengl.h>
+#include <mutex>
 
 using namespace std;
 
@@ -15,22 +18,26 @@ using namespace std;
          << argv[0] << "\" c(забегов) t(итераций) m(новых ребер за итерацию) p(шанс выбрать соседа)" << endl; \
     return 1;
 typedef vector<size_t> Node; // Вершина графа (список смежных ей вершин)
+mutex matplot_mutex; // Разрешает нескольким потокам иметь доступ по очереди
 
-void saveGraph(vector<Node>& nodes, string filename = "out/graph.dot")
+void saveGraph(vector<Node>& nodes, string filename = "out/graph.svg")
 {
-    ofstream graphFile;
-    graphFile.open(filename);
-    graphFile << "graph G {\n  splines=true;\n  overlap=scale;\n  node [shape=circle];\n";
+    vector<pair<size_t, size_t>> edges;
     for (auto i = 0; i < nodes.size(); ++i)
     {
         for (auto neighbor : nodes[i])
         {
-            if (i <= neighbor)
-                graphFile << "  " << i << " -- " << neighbor << ";\n";
+            if (i < neighbor) // Каждое ребро записываем только один раз
+                edges.emplace_back(i, neighbor);
         }
     }
-    graphFile << "}\n";
-    graphFile.close();
+    {
+        using namespace matplot;
+        lock_guard<mutex> lock(matplot_mutex);
+        auto f = figure<backend::opengl>(true);
+        graph(edges);
+        save(filename);
+    }
 }
 
 void runSimulation(string* stats, unsigned int run, size_t iterations, size_t edges_per_iter, float choose_neighbor_chance) {
@@ -108,8 +115,9 @@ void runSimulation(string* stats, unsigned int run, size_t iterations, size_t ed
         }
 
     }
-    saveGraph(nodes, format("out/{}.dot", run));
-    cout << "Забег #" << run << " закончился.\n";
+    cout << "Забег #" << run << " закончился. Отрисовывается граф.\n";
+    saveGraph(nodes, format("out/{}.png", run));
+    cout << "Граф #" << run << " отрисован.\n";
 }
 
 int main(int argc, char* argv[])
@@ -140,6 +148,7 @@ int main(int argc, char* argv[])
     statsFile << "Забег,Итерация,Треугольники,2-х реберные пути\n"; // CSV - первая строчка для заголовков
     cout << "c: " << run_count << "\tt: " << iterations << "\tm: " << edges_per_iter << "\tp: " << choose_neighbor_chance << endl;
     vector<thread> threads;
+    vector<pair<size_t, size_t>> edgesForGraphs;
     vector<string> statStrings(run_count); // Заранее выделяем место для строк
     for (unsigned int run = 0; run < run_count; run++)
     {

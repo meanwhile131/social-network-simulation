@@ -4,3 +4,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 project(Simulation)
 add_executable(main src/main.cpp)
+add_subdirectory(lib)

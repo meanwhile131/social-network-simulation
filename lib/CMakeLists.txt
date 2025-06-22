@@ -1,0 +1,3 @@
+set(MATPLOTPP_BUILD_EXPERIMENTAL_OPENGL_BACKEND ON)
+add_subdirectory(matplotplusplus)
+target_link_libraries(main PUBLIC matplot)
