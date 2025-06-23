@@ -35,8 +35,7 @@ void saveGraph(vector<Node> &nodes, string filename = "out/graph.dot")
 
 void runSimulation(string *stats, unsigned int run, size_t iterations, size_t edges_per_iter, float choose_neighbor_chance)
 {
-    mt19937 gen;   // Генератор случайных чисел
-    gen.seed(run); // Каждый забег будет с другой случайностью
+    mt19937 gen(run); // Генератор случайных чисел, каждый забег будет с другой случайностью
     bernoulli_distribution choose_neighbor(choose_neighbor_chance);
     vector<Node> nodes = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}}; // Граф (вершина это вектор её соседей)
     vector<size_t> weights;
@@ -88,8 +87,12 @@ void runSimulation(string *stats, unsigned int run, size_t iterations, size_t ed
         }
         nodes.push_back(new_node); // Добавляем новую вершину в граф
 
-        if (i % 1000 == 1)
+        if (i % 1000 == 0)
         {
+            if (i == 1000)
+            {
+                saveGraph(nodes, format("out/{}_1.dot", run));
+            }
             // Считаем количество треугольников и путей из 2-х ребер у вершины 0
             size_t triangle_count = 0;
             size_t path2_count = 0;
@@ -105,6 +108,7 @@ void runSimulation(string *stats, unsigned int run, size_t iterations, size_t ed
                         triangle_count++;
                 }
             }
+            triangle_count /= 2;
             cout << run << "\t" << i << "\n";
             stats->append(format("{},{},{},{}\n", run, i, triangle_count, path2_count));
         }
