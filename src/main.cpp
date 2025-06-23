@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <vector>
 #include <random>
 #include <fstream>
@@ -89,10 +89,6 @@ void runSimulation(string *stats, unsigned int run, size_t iterations, size_t ed
 
         if (i % 1000 == 0)
         {
-            if (i == 1000)
-            {
-                saveGraph(nodes, format("out/{}_1.dot", run));
-            }
             // Считаем количество треугольников и путей из 2-х ребер у вершины 0
             size_t triangle_count = 0;
             size_t path2_count = 0;
