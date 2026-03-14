@@ -104,7 +104,7 @@ void runSimulation(string *stats, unsigned int run, size_t iterations, size_t ed
                         triangle_count++;
                 }
             }
-            triangle_count /= 2;
+            triangle_count /= 2; // Каждый треугольник считаем в две стороны
             cout << run << "\t" << i << "\n";
             stats->append(format("{},{},{},{}\n", run, i, triangle_count, path2_count));
         }
