@@ -23,6 +23,9 @@ void saveGraph(vector<Node> &nodes, string filename = "out/graph.dot")
     graphFile << "graph G {\n  splines=true;\n  overlap=scale;\n  node [shape=circle];\n";
     for (auto i = 0; i < nodes.size(); ++i)
     {
+	if (i == 0) { // Выделяем 0-ю вершину
+	    graphFile << " " << i << " [style=filled, fillcolor=red];\n";
+	}
         for (auto neighbor : nodes[i])
         {
             if (i <= neighbor)
@@ -87,7 +90,7 @@ void runSimulation(string *stats, unsigned int run, size_t iterations, size_t ed
         }
         nodes.push_back(new_node); // Добавляем новую вершину в граф
 
-        if (i % 1000 == 0)
+        if (i % 1 == 0)
         {
             // Считаем количество треугольников и путей из 2-х ребер у вершины 0
             size_t triangle_count = 0;
